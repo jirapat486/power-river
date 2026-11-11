@@ -36,6 +36,8 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 .top h1{font-size:clamp(17px,2.6vw,24px);margin:0;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip{background:var(--card);border:2px solid var(--ink);border-radius:999px;padding:6px 12px;font-size:15px;white-space:nowrap}
 .iconbtn{background:var(--card);border:2px solid var(--ink);border-radius:12px;min-width:44px;height:44px;padding:0 10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.iconbtn[aria-pressed="false"]{background:#e9e6f2;position:relative}
+.iconbtn[aria-pressed="false"]::after{content:'';position:absolute;left:8px;right:8px;top:50%;height:3px;background:var(--red);transform:rotate(-35deg);border-radius:2px}
 .iconbtn .badge{background:var(--orange);border-radius:999px;font-size:13px;padding:1px 8px;border:1.5px solid var(--ink)}
 @media (max-width:700px){.chip#scoreChip,.iconbtn .lbltxt{display:none}}
 
@@ -153,7 +155,8 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
     <span class="chip" id="progress">ทดสอบแล้ว 0/20</span>
     <span class="chip" id="scoreChip" hidden>ทายถูก 0/0</span>
     <button class="iconbtn" id="tableBtn" aria-label="เปิดตารางผล">📋 <span class="lbltxt">ตารางผล</span> <span class="badge" id="tableBadge">0</span></button>
-    <button class="iconbtn" id="muteBtn" aria-label="เปิด/ปิดเสียง">🔊</button>
+    <button class="iconbtn" id="musicBtn" aria-label="เปิด/ปิดเสียงพื้นหลัง" aria-pressed="true">🎵</button>
+    <button class="iconbtn" id="muteBtn" aria-label="เปิด/ปิดเสียงประกอบ" aria-pressed="true">🔊</button>
     <button class="iconbtn" id="restartBtn" aria-label="กลับหน้าเริ่ม">⟳</button>
   </div>
 
@@ -326,7 +329,9 @@ const WINDOWS=[];
 })();
 
 /* ---------- sound (iOS: unlocked on first tap) ---------- */
-let actx=null, muted=false;
+let actx=null, muted=false, musicOn=true;
+try{ const a=JSON.parse(localStorage.getItem('powerRiver.audio')||'{}'); if(a.sfx===false)muted=true; if(a.music===false)musicOn=false; }catch(e){}
+function saveAudio(){ try{ localStorage.setItem('powerRiver.audio',JSON.stringify({sfx:!muted,music:musicOn})); }catch(e){} }
 function ac(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(actx&&actx.state!=='running')actx.resume(); return actx; }
 function tone(f,dur,type='sine',gain=.15,delay=0,slide=null){
   const a=ac(); if(!a||muted)return;
@@ -350,7 +355,57 @@ const SFX={
   fail:()=>{noise(.35,.15);tone(240,.4,'square',.07,0,90);},
   win:()=>[523,659,784,659,784,1047,1319].forEach((f,i)=>tone(f,.3,'triangle',.15,i*.12)),
 };
-document.addEventListener('touchend',()=>ac(),{once:true});
+// iOS may suspend audio; any touch revives it.
+document.addEventListener('pointerdown',()=>{ if(actx&&actx.state!=='running') actx.resume(); });
+document.addEventListener('visibilitychange',()=>{ if(!actx) return; document.hidden?actx.suspend():actx.resume(); });
+
+/* ---------- background music: soft loop, generated (I–vi–IV–V in C) ---------- */
+const NOTE=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11};return 440*Math.pow(2,(m[n[0]]+(+n.slice(1)-4)*12-9)/12);};
+const BARS=[
+  {ch:['C4','E4','G4'],bass:'C3',mel:['E5',0,'G5',0,'A5','G5','E5',0],alt:['G5',0,'E5',0,'D5','E5','C5',0]},
+  {ch:['A3','C4','E4'],bass:'A2',mel:['C5',0,'E5',0,'D5',0,'C5',0]},
+  {ch:['F3','A3','C4'],bass:'F2',mel:['A4',0,'C5',0,'D5','C5','A4',0]},
+  {ch:['G3','B3','D4'],bass:'G2',mel:['G4',0,'B4',0,'D5',0,0,0],alt:['G4',0,'B4',0,'D5',0,'G5',0]},
+];
+const EIGHTH=60/92/2, MUSIC_VOL=1, DUCK_VOL=.2;
+let musicBus=null, musicTimer=null, musicStep=0, musicT=0;
+function mTone(f,dur,type,gain,t,attack=.01){
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(gain,t+attack); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(musicBus); o.start(t); o.stop(t+dur+.05);
+}
+function musicStepAt(i,t){
+  const bar=BARS[(i>>3)%4], pos=i%8, odd=Math.floor(i/32)%2===1;
+  if(pos===0) bar.ch.forEach(n=>mTone(NOTE(n),EIGHTH*8,'sine',.018,t,.4));
+  if(pos===0||pos===4) mTone(NOTE(bar.bass),EIGHTH*3,'triangle',.05,t,.02);
+  const n=(odd&&bar.alt?bar.alt:bar.mel)[pos];
+  if(n){ mTone(NOTE(n),.6,'sine',.045,t); mTone(NOTE(n)*2,.3,'sine',.008,t); }
+}
+function startMusic(){
+  const a=ac(); if(!a||!musicOn||musicTimer) return;
+  musicBus=a.createGain(); musicBus.connect(a.destination);
+  musicBus.gain.setValueAtTime(0,a.currentTime); musicBus.gain.linearRampToValueAtTime(MUSIC_VOL,a.currentTime+1.5);
+  musicStep=0; musicT=a.currentTime+.1;
+  musicTimer=setInterval(()=>{
+    if(actx.state!=='running') return;
+    if(musicT<actx.currentTime) musicT=actx.currentTime+.05;
+    while(musicT<actx.currentTime+.3){ musicStepAt(musicStep++,musicT); musicT+=EIGHTH; }
+  },60);
+}
+function stopMusic(){
+  if(!musicTimer) return;
+  clearInterval(musicTimer); musicTimer=null;
+  const bus=musicBus, t=actx.currentTime;
+  bus.gain.cancelScheduledValues(t); bus.gain.setValueAtTime(bus.gain.value,t); bus.gain.linearRampToValueAtTime(0,t+.3);
+  setTimeout(()=>bus.disconnect(),600);
+}
+function duck(on){
+  if(!musicBus||!musicTimer) return;
+  const t=actx.currentTime;
+  musicBus.gain.cancelScheduledValues(t);
+  musicBus.gain.setTargetAtTime(on?DUCK_VOL:MUSIC_VOL,t,on?.08:.5);
+}
 
 /* ---------- saved progress ---------- */
 const SAVE_KEY='powerRiver.v1';
@@ -443,6 +498,7 @@ async function runTest(){
   S.running=true;
   const it=byId[S.current];
   panel(`<div class="msg">⚡ ไฟฟ้ากำลังวิ่งไป...</div>`);
+  duck(true);
   SFX.buzz(.9);
   await animatePath($('#flowA'),900);
   makeLive($('#flowA'));
@@ -475,6 +531,7 @@ async function runTest(){
   const done=S.testedOrder.length===ITEMS.length;
   panel(`<div class="msg">${explain}${feedback}</div>${done?'':'<span class="hint">ลากชิ้นต่อไปมาวางได้เลย</span>'}`);
   S.running=false;
+  setTimeout(()=>{ if(!S.running) duck(false); },600);
   render();
   if(done&&first&&!S.finished){ S.finished=true; clearSave(); setTimeout(finish,1300); }
   else if(!S.finished) save();
@@ -486,7 +543,8 @@ function finish(){
   $('#cityGlow').classList.add('on'); WINDOWS.forEach(w=>w.classList.add('on'));
   const right=Object.values(S.tested).filter(r=>r.correct).length;
   $('#endScore').innerHTML=S.predict?`<div>ทายถูก</div><div class="score">${right} / 20</div>`:'';
-  $('#endOv').hidden=false; SFX.win(); confetti();
+  $('#endOv').hidden=false; duck(true); SFX.win(); confetti();
+  setTimeout(()=>duck(false),2200);
 }
 function confetti(){
   const cols=['#ff8a1f','#c5b4f0','#ffd84d','#f47aa8','#7ec8f0','#2fa86b'];
@@ -503,7 +561,7 @@ function begin(state){
   resetScene(); showSlot(null); render(); idlePanel(); openDrawer(false);
   $('#startOv').hidden=true; $('#endOv').hidden=true;
   $('#tray').scrollLeft=0;
-  ac();
+  ac(); startMusic();
 }
 function showStart(){
   const sv=loadSave(), rb=$('#resumeBtn');
@@ -562,7 +620,10 @@ $('#viewBtn').onclick=()=>{ $('#endOv').hidden=true; openDrawer(true); panel(`<d
 $('#restartBtn').onclick=()=>{ if(S&&S.running) return; showStart(); };
 $('#tableBtn').onclick=()=>openDrawer(!$('#drawer').classList.contains('open'));
 $('#closeDrawer').onclick=()=>openDrawer(false);
-$('#muteBtn').onclick=()=>{muted=!muted;$('#muteBtn').textContent=muted?'🔇':'🔊';};
+function syncAudioBtns(){ $('#muteBtn').setAttribute('aria-pressed',String(!muted)); $('#musicBtn').setAttribute('aria-pressed',String(musicOn)); }
+$('#muteBtn').onclick=()=>{ muted=!muted; syncAudioBtns(); saveAudio(); };
+$('#musicBtn').onclick=()=>{ musicOn=!musicOn; syncAudioBtns(); saveAudio(); if(musicOn&&S) startMusic(); else stopMusic(); };
+syncAudioBtns();
 
 showStart();
 
