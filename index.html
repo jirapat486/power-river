@@ -158,18 +158,70 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 .modal p{color:var(--muted);line-height:1.6;margin:8px 0}
 .modal .tip{background:#fff1f6;border:2px dashed #f06292;border-radius:14px;padding:10px 14px;color:var(--ink);text-align:left;font-size:15px}
 .modal .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
-.toggle{display:flex;align-items:center;gap:12px;justify-content:center;margin:16px 0;font-size:17px;cursor:pointer}
-.toggle input{position:absolute;opacity:0}
-.toggle .sw{width:56px;height:30px;border-radius:999px;background:#ccc;border:2px solid var(--ink);position:relative;transition:background .2s;flex:none}
-.toggle .sw::after{content:'';position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--ink);transition:left .2s}
-.toggle input:checked + .sw{background:var(--orange)}
-.toggle input:checked + .sw::after{left:28px}
-.toggle input:focus-visible + .sw{outline:3px solid var(--purple-ink);outline-offset:2px}
 .score{font-size:40px;font-weight:600;color:var(--orange);margin:6px 0}
 
 .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:45;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+/* ---------- title screen: same look as the sister game "นำไฟฟ้า หรือ ไม่นำไฟฟ้า?" ---------- */
+#titleUI{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,22px);
+  padding:calc(70px + var(--sat)) calc(16px + var(--sar)) calc(64px + var(--sab)) calc(16px + var(--sal));text-align:center;color:#263238;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='4' stroke-linejoin='round'%3E%3Cpath d='M30 10 L18 38 H32 L22 64 L46 30 H32 L42 10 Z'/%3E%3Cpath d='M110 90 L98 118 H112 L102 144 L126 110 H112 L122 90 Z'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(circle at 50% 35%,#b5e8ff 0%,#39b4f2 45%,#1567b8 100%);
+  transition:opacity .45s,transform .45s}
+#titleUI[hidden]{display:none}
+#titleUI.leave{opacity:0;transform:scale(1.08);pointer-events:none}
+.outlined{color:#fff;font-weight:600;
+  text-shadow:3px 0 0 #263238,-3px 0 0 #263238,0 3px 0 #263238,0 -3px 0 #263238,2px 2px 0 #263238,-2px 2px 0 #263238,2px -2px 0 #263238,-2px -2px 0 #263238,0 7px 0 #263238}
+.tTitle{margin:0;font-size:clamp(38px,min(9.5vw,8.6vh),96px);line-height:1.2}
+.tTitle span{display:block}
+.tTitle .a{color:#ffd54f}
+.tTitle .small{font-size:.55em;line-height:1;margin:.12em 0 .22em}   /* room for น้ำ's tone mark below */
+.tTitle .b{color:#8be3ff}
+.tMascot{width:clamp(100px,17vh,190px)}
+.mascot{display:block;overflow:visible;width:100%;height:auto}
+.mascot.nervous{animation:shiver .25s linear infinite}
+.mascot.happy{animation:hop .6s ease-in-out infinite}
+.mascot .glass{transition:fill .3s}
+.tTag{font-size:clamp(18px,2.4vw,26px);background:#fff;border:4px solid #263238;border-radius:18px;padding:.4rem 1.2rem;box-shadow:0 5px 0 rgba(38,50,56,.35);max-width:min(92vw,760px)}
+.tPlay{display:flex;align-items:center;justify-content:center;gap:14px 18px;flex-wrap:wrap}
+
+/* chunky game buttons */
+.gbtn{font:inherit;font-weight:600;color:#fff;border:4px solid #263238;border-radius:999px;cursor:pointer;padding:.35em 1.6em .45em;
+  text-shadow:0 3px 0 rgba(0,0,0,.25);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),inset 0 4px 0 rgba(255,255,255,.35),0 6px 0 #263238;transition:transform .08s,background .2s}
+.gbtn:active{transform:translateY(5px);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),inset 0 4px 0 rgba(255,255,255,.35),0 1px 0 #263238;animation:none}
+.gbtn.green{background:#43c048}
+.gbtn.huge{font-size:clamp(28px,min(5vw,6.4vh),56px);animation:pulse 1.2s ease-in-out infinite}
+.gbtn.white{background:#fff;color:#263238;text-shadow:none;font-size:clamp(18px,2.2vw,24px)}
+.gbtn.armed{background:#ef4444;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.gbtn:focus-visible,.rbtn:focus-visible{outline:4px solid #ffd54f;outline-offset:4px}
+
+.tAudio{position:absolute;top:calc(14px + var(--sat));right:calc(14px + var(--sar));display:flex;gap:10px}
+.rbtn{position:relative;width:58px;height:58px;padding:0;border-radius:50%;background:#fff;border:4px solid #263238;font-size:26px;cursor:pointer;
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.12),0 5px 0 #263238;display:grid;place-items:center}
+.rbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #263238}
+.rbtn[aria-pressed="false"]{background:#cfd8dc}
+.rbtn[aria-pressed="false"]::after{content:'';position:absolute;left:18%;right:18%;top:50%;height:5px;margin-top:-2.5px;background:#e53935;border-radius:3px;transform:rotate(-40deg)}
+.pchip{position:absolute;right:calc(14px + var(--sar));bottom:calc(14px + var(--sab));display:flex;align-items:center;gap:8px;cursor:pointer;
+  font:inherit;font-size:17px;font-weight:600;color:#263238;background:#fff;border:4px solid #263238;border-radius:999px;padding:6px 16px 6px 10px;min-height:48px;box-shadow:0 5px 0 #263238}
+.pchip:active{transform:translateY(4px);box-shadow:0 1px 0 #263238}
+.pchip .dot{width:18px;height:18px;border-radius:50%;border:3px solid #263238;background:#cfd8dc;transition:background .2s}
+.pchip[aria-pressed="true"] .dot{background:#43c048}
+.pchip:focus-visible{outline:4px solid #ffd54f;outline-offset:4px}
+.tVer{position:absolute;left:calc(16px + var(--sal));bottom:calc(14px + var(--sab));color:rgba(255,255,255,.85);font-size:16px}
+
+/* entrance (replayed each time the title screen opens) */
+#titleUI.show .tTitle{animation:titleIn .7s cubic-bezier(.3,1.6,.5,1) both}
+#titleUI.show .tTag{animation:popUp .5s .25s cubic-bezier(.3,1.5,.5,1) both}
+#titleUI.show .tPlay{animation:popUp .5s .4s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes titleIn{0%{transform:translateY(-60px) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes popUp{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes shiver{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px) rotate(-2deg)}75%{transform:translateX(2px) rotate(2deg)}}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(0) scale(1.08,.92)}50%{transform:translateY(-16px) scale(.96,1.04)}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important}#titleUI{transition:none}}
 </style>
 </head>
 <body>
@@ -301,14 +353,20 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
   </div>
 </aside>
 
-<div class="overlay" id="startOv">
-  <div class="modal">
-    <h2>⚡ ภารกิจส่งไฟฟ้าข้ามแม่น้ำ</h2>
-    <p>เมืองจิ๋วฝั่งตรงข้ามไฟดับ! สายไฟจากโรงไฟฟ้าขาดกลางแม่น้ำ<br>ลองหยิบวัตถุจากถุงปริศนามาต่อสายไฟ แล้วดูว่าชิ้นไหน<b>นำไฟฟ้า</b>ได้บ้าง</p>
-    <button class="btn go big" id="resumeBtn" hidden>เล่นต่อ ▶</button>
-    <label class="toggle"><input type="checkbox" id="predictToggle" checked><span class="sw"></span>โหมดทายก่อนทดลอง</label>
-    <button class="btn go big" id="startBtn">เริ่มเล่น ▶</button>
+<div id="titleUI" role="dialog" aria-label="หน้าเริ่ม">
+  <h1 class="tTitle outlined"><span class="a">ภารกิจส่งไฟฟ้า</span><span class="small">ข้าม</span><span class="b">แม่น้ำ</span></h1>
+  <div class="tMascot" id="tMascot"></div>
+  <div class="tTag">มาช่วย <b>น้องหลอดไฟ</b> ส่งไฟข้ามแม่น้ำไปให้เมืองจิ๋วกันเถอะ!</div>
+  <div class="tPlay">
+    <button class="gbtn green huge" id="playBtn">▶ เริ่มเล่น</button>
+    <button class="gbtn white" id="newBtn" hidden>เริ่มใหม่</button>
   </div>
+  <div class="tAudio">
+    <button class="rbtn" id="tMusicBtn" aria-label="เปิด/ปิดเสียงพื้นหลัง" aria-pressed="true">🎵</button>
+    <button class="rbtn" id="tMuteBtn" aria-label="เปิด/ปิดเสียงประกอบ" aria-pressed="true">🔊</button>
+  </div>
+  <button class="pchip" id="predictChip" aria-pressed="true"><span class="dot"></span><span id="predictTxt">🔮 โหมดทาย: เปิด</span></button>
+  <div class="tVer" id="tVer"></div>
 </div>
 
 <div class="overlay" id="endOv" hidden>
@@ -425,6 +483,7 @@ const SFX={
   ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,'triangle',.16,i*.09)),
   fail:()=>{noise(.35,.15);tone(240,.4,'square',.07,0,90);},
   win:()=>[523,659,784,659,784,1047,1319].forEach((f,i)=>tone(f,.3,'triangle',.15,i*.12)),
+  power:()=>{tone(180,.55,'sawtooth',.04,0,900);tone(360,.5,'triangle',.1,0,1400);[1047,1568].forEach((f,i)=>tone(f,.35,'sine',.12,.45+i*.1));},
 };
 // iOS may suspend audio; any touch revives it.
 document.addEventListener('pointerdown',()=>{ if(actx&&actx.state!=='running') actx.resume(); });
@@ -634,17 +693,67 @@ function confetti(){
 function begin(state){
   S=state;
   resetScene(); showSlot(null); render(); idlePanel(); openDrawer(false);
-  $('#startOv').hidden=true; $('#endOv').hidden=true;
+  $('#endOv').hidden=true;
   $('#tray').scrollLeft=0;
-  ac(); startMusic();
+  ac(); SFX.power(); startMusic();
+  leaveTitle();
 }
+
+/* ---------- title screen ---------- */
+// Bump on every deploy: teachers read it off the title screen to check an iPad has the latest version.
+const APP_VERSION=2;
+const TUI=$('#titleUI');
+let predictMode=true, onTitle=false, leaveT=null, armT=null;
+try{ if(localStorage.getItem('powerRiver.predict')==='0') predictMode=false; }catch(e){}
+$('#tVer').textContent=`เวอร์ชัน ${APP_VERSION}`;
+function syncPredict(){
+  $('#predictChip').setAttribute('aria-pressed',String(predictMode));
+  $('#predictTxt').textContent=`🔮 โหมดทาย: ${predictMode?'เปิด':'ปิด'}`;
+}
+// Mascot น้องหลอดไฟ — same character as in the sister game "นำไฟฟ้า หรือ ไม่นำไฟฟ้า?"
+function mascotSVG(mood,lit){
+  const glass=lit?'#ffeb3b':'#fff8c4';
+  const face=mood==='happy'
+    ? '<path d="M31 46 Q37 37 43 46 M57 46 Q63 37 69 46" fill="none" stroke-width="4.5"/><path d="M36 56 Q50 74 64 56 Z" fill="#c62828"/>'
+    : '<circle cx="38" cy="46" r="8" fill="#fff" stroke-width="3"/><circle cx="62" cy="46" r="8" fill="#fff" stroke-width="3"/>'+
+      '<circle cx="38" cy="43" r="3.5" fill="#263238" stroke="none"/><circle cx="62" cy="43" r="3.5" fill="#263238" stroke="none"/>'+
+      '<path d="M38 64 q4 -5 8 0 t8 0 t8 0" fill="none" stroke-width="3.5" transform="translate(-4 0)"/>'+
+      '<path d="M74 24 q-4 8 0 10 q4 -2 0 -10" fill="#4fc3f7" stroke-width="2"/>';
+  const rays=lit?'<g stroke="#ffd54f" stroke-width="5"><path d="M50 -10 V-2 M8 6 L14 12 M92 6 L86 12 M-6 44 H2 M98 44 H106"/></g>':'';
+  return `<svg class="mascot ${mood}" viewBox="-8 -12 116 132" aria-hidden="true" stroke="#263238" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${rays}`+
+    `<path class="glass" d="M50 8 A37 37 0 0 1 75 72 L70 84 H30 L25 72 A37 37 0 0 1 50 8 Z" fill="${glass}"/>`+
+    '<path d="M28 30 Q34 18 46 15" fill="none" stroke="#fff" stroke-width="5"/>'+
+    '<ellipse cx="27" cy="58" rx="6" ry="4" fill="#ffab91" stroke="none" opacity=".8"/><ellipse cx="73" cy="58" rx="6" ry="4" fill="#ffab91" stroke="none" opacity=".8"/>'+
+    face+
+    '<rect x="30" y="84" width="40" height="9" rx="3" fill="#b0bec5"/><rect x="32" y="93" width="36" height="9" rx="3" fill="#90a4ae"/>'+
+    '<path d="M40 102 H60 L55 110 H45 Z" fill="#546e7a"/></svg>';
+}
+const setMascot=(mood,lit)=>{ $('#tMascot').innerHTML=mascotSVG(mood,lit); };
 function showStart(){
-  const sv=loadSave(), rb=$('#resumeBtn');
-  rb.hidden=!sv;
-  if(sv) rb.textContent=`เล่นต่อ (ทดสอบแล้ว ${sv.testedOrder.length}/20) ▶`;
-  $('#startBtn').textContent=sv?'เริ่มเกมใหม่':'เริ่มเล่น ▶';
-  $('#startBtn').classList.toggle('go',!sv);
-  openDrawer(false); $('#endOv').hidden=true; $('#startOv').hidden=false;
+  const sv=loadSave();
+  clearTimeout(leaveT); disarmNew();
+  $('#playBtn').textContent=sv?`▶ เล่นต่อ (${sv.testedOrder.length}/20)`:'▶ เริ่มเล่น';
+  $('#newBtn').hidden=!sv;
+  openDrawer(false); $('#endOv').hidden=true;
+  resetScene(); showSlot(null);
+  setMascot('nervous',false);   // the town is dark — น้องหลอดไฟ is waiting for power
+  TUI.hidden=false; TUI.classList.remove('leave');
+  restart(TUI,'show');
+  onTitle=true;
+  setTimeout(()=>{ if(onTitle) $('#playBtn').focus({preventScroll:true}); },700);
+}
+// The mascot lights up first, then the title screen fades away into the game.
+function leaveTitle(){
+  onTitle=false;
+  setMascot('happy',true);
+  leaveT=setTimeout(()=>{
+    TUI.classList.add('leave');
+    leaveT=setTimeout(()=>{ TUI.hidden=true; TUI.classList.remove('show','leave'); },500);
+  },650);
+}
+function disarmNew(){
+  clearTimeout(armT); const b=$('#newBtn');
+  b.classList.remove('armed'); b.textContent='เริ่มใหม่';
 }
 
 /* ---------- input: drag & tap ---------- */
@@ -688,16 +797,40 @@ document.addEventListener('dblclick',e=>e.preventDefault());
 document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>e.preventDefault());
 
-$('#startBtn').onclick=()=>{ clearSave(); begin(newState($('#predictToggle').checked)); };
-$('#resumeBtn').onclick=()=>{ const sv=loadSave(); if(sv) begin({...newState(sv.predict),...sv}); };
-$('#againBtn').onclick=showStart;
+$('#playBtn').onclick=()=>{
+  if(!onTitle) return;
+  const sv=loadSave();
+  if(sv) begin({...newState(sv.predict),...sv}); else begin(newState(predictMode));
+};
+// starting over wipes saved results, so it takes a second tap to confirm
+$('#newBtn').onclick=()=>{
+  if(!onTitle) return;
+  const b=$('#newBtn');
+  if(!b.classList.contains('armed')){
+    b.classList.add('armed'); b.textContent='แตะอีกครั้งเพื่อลบผลเดิม'; SFX.click();
+    armT=setTimeout(disarmNew,3500); return;
+  }
+  disarmNew(); clearSave(); begin(newState(predictMode));
+};
+$('#predictChip').onclick=()=>{
+  predictMode=!predictMode; syncPredict(); SFX.click();
+  try{ localStorage.setItem('powerRiver.predict',predictMode?'1':'0'); }catch(e){}
+};
+syncPredict();
+$('#againBtn').onclick=()=>showStart();
 $('#viewBtn').onclick=()=>{ $('#endOv').hidden=true; openDrawer(true); panel(`<div class="msg">🎉 ทดสอบครบแล้ว! ลากวัตถุออกมาทดสอบซ้ำได้ หรือกด ⟳ เพื่อเล่นใหม่</div>`); };
 $('#restartBtn').onclick=()=>{ if(S&&S.running) return; showStart(); };
 $('#tableBtn').onclick=()=>openDrawer(!$('#drawer').classList.contains('open'));
 $('#closeDrawer').onclick=()=>openDrawer(false);
-function syncAudioBtns(){ $('#muteBtn').setAttribute('aria-pressed',String(!muted)); $('#musicBtn').setAttribute('aria-pressed',String(musicOn)); }
-$('#muteBtn').onclick=()=>{ muted=!muted; syncAudioBtns(); saveAudio(); };
-$('#musicBtn').onclick=()=>{ musicOn=!musicOn; syncAudioBtns(); saveAudio(); if(musicOn&&S) startMusic(); else stopMusic(); };
+// the title screen has its own pair of sound buttons; both pairs mirror the same settings
+function syncAudioBtns(){
+  ['#muteBtn','#tMuteBtn'].forEach(s=>$(s).setAttribute('aria-pressed',String(!muted)));
+  ['#musicBtn','#tMusicBtn'].forEach(s=>$(s).setAttribute('aria-pressed',String(musicOn)));
+}
+const toggleSfx=()=>{ muted=!muted; syncAudioBtns(); saveAudio(); SFX.click(); };
+const toggleMusic=()=>{ musicOn=!musicOn; syncAudioBtns(); saveAudio(); if(musicOn&&S) startMusic(); else stopMusic(); };
+$('#muteBtn').onclick=$('#tMuteBtn').onclick=toggleSfx;
+$('#musicBtn').onclick=$('#tMusicBtn').onclick=toggleMusic;
 syncAudioBtns();
 
 showStart();
