@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ส่งไฟข้ามแม่น้ำ</title>
-<meta name="description" content="เกมทดลองวัตถุนำไฟฟ้า ส่งไฟจากโรงไฟฟ้าข้ามแม่น้ำไปยังเมือง">
+<meta name="description" content="เกมทดลองวัตถุนำไฟฟ้า ส่งไฟจากโรงไฟฟ้าข้ามแม่น้ำไปยังเมืองจิ๋ว">
 <meta name="theme-color" content="#1b2550">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -185,7 +185,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
   </div>
 
   <div class="stage">
-    <svg id="scene" viewBox="0 0 1000 420" aria-label="ฉากโรงไฟฟ้า แม่น้ำ และเมือง">
+    <svg id="scene" viewBox="0 0 1000 420" aria-label="ฉากโรงไฟฟ้า แม่น้ำ และเมืองจิ๋ว">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#0e1433"/><stop offset="1" stop-color="#2f3d7c"/>
@@ -255,7 +255,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
         <text x="877" y="101" class="lbl" style="font-size:19px">ไฟติดแล้ว! 💡</text>
       </g>
       <rect x="822" y="306" width="110" height="30" rx="15" fill="#fff" stroke="#2b2d42" stroke-width="2.5"/>
-      <text x="877" y="327" class="lbl">เมือง</text>
+      <text x="877" y="327" class="lbl">เมืองจิ๋ว</text>
 
       <g stroke="#2b2d42" stroke-width="2.5">
         <rect x="295" y="108" width="10" height="186" fill="#8b5a2b"/>
@@ -304,7 +304,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 <div class="overlay" id="startOv">
   <div class="modal">
     <h2>⚡ ภารกิจส่งไฟฟ้าข้ามแม่น้ำ</h2>
-    <p>เมืองฝั่งตรงข้ามไฟดับ! สายไฟจากโรงไฟฟ้าขาดกลางแม่น้ำ<br>ลองหยิบวัตถุจากถุงปริศนามาต่อสายไฟ แล้วดูว่าชิ้นไหน<b>นำไฟฟ้า</b>ได้บ้าง</p>
+    <p>เมืองจิ๋วฝั่งตรงข้ามไฟดับ! สายไฟจากโรงไฟฟ้าขาดกลางแม่น้ำ<br>ลองหยิบวัตถุจากถุงปริศนามาต่อสายไฟ แล้วดูว่าชิ้นไหน<b>นำไฟฟ้า</b>ได้บ้าง</p>
     <button class="btn go big" id="resumeBtn" hidden>เล่นต่อ ▶</button>
     <label class="toggle"><input type="checkbox" id="predictToggle" checked><span class="sw"></span>โหมดทายก่อนทดลอง</label>
     <button class="btn go big" id="startBtn">เริ่มเล่น ▶</button>
@@ -313,7 +313,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 
 <div class="overlay" id="endOv" hidden>
   <div class="modal">
-    <h2>🎉 เมืองสว่างไสวแล้ว!</h2>
+    <h2>🎉 เมืองจิ๋วสว่างไสวแล้ว!</h2>
     <p>หนูทดสอบวัตถุครบทั้ง 20 ชิ้น เก่งมาก!</p>
     <div id="endScore"></div>
     <div class="tip"><b style="color:#c2185b">เคล็ดลับ:</b> สิ่งของที่นำไฟฟ้าในชุดนี้ทั้งหมดเป็น<b>โลหะ</b> ส่วนที่ไม่นำไฟฟ้าเป็น<b>พลาสติก ยาง ไม้ และผ้า</b></div>
@@ -516,7 +516,7 @@ function render(){
   sc.textContent=`ทายถูก ${Object.values(S.tested).filter(r=>r.correct).length}/${n}`;
 }
 function panel(html){ $('#panel').innerHTML=html; }
-function idlePanel(){ panel(`<div class="msg">ลากวัตถุจากถุงปริศนาด้านล่าง ไปวางใน<b>ช่องกลางแม่น้ำ</b> เพื่อต่อสายไฟให้เมือง ⚡<br><span class="hint">(แตะที่วัตถุก็ได้ · ปัดซ้าย-ขวาเพื่อดูวัตถุเพิ่ม)</span></div>`); }
+function idlePanel(){ panel(`<div class="msg">ลากวัตถุจากถุงปริศนาด้านล่าง ไปวางใน<b>ช่องกลางแม่น้ำ</b> เพื่อต่อสายไฟให้เมืองจิ๋ว ⚡<br><span class="hint">(แตะที่วัตถุก็ได้ · ปัดซ้าย-ขวาเพื่อดูวัตถุเพิ่ม)</span></div>`); }
 function openDrawer(open){ $('#drawer').classList.toggle('open',open); }
 
 function resetScene(){
@@ -601,7 +601,7 @@ async function runTest(){
     if(correct===false) feedback=`<br><span class="bad">ทายผิดนะ ไม่เป็นไร เรียนรู้จากการทดลอง 😊</span>`;
   }
   const explain=it.c
-    ? `💡 <b>${it.name}</b>ทำจาก${it.mat} ไฟฟ้าจึงไหลผ่านได้ <span class="good">ไฟในเมืองติดแล้ว!</span>`
+    ? `💡 <b>${it.name}</b>ทำจาก${it.mat} ไฟฟ้าจึงไหลผ่านได้ <span class="good">ไฟในเมืองจิ๋วติดแล้ว!</span>`
     : `🔌 <b>${it.name}</b>ทำจาก${it.mat} ไฟฟ้าไหลผ่านไม่ได้ <span class="bad">วงจรจึงขาด</span>`;
   const done=S.testedOrder.length===ITEMS.length;
   panel(`<div class="msg">${explain}${feedback}</div>${done?'':'<span class="hint">ลากชิ้นต่อไปมาวางได้เลย</span>'}`);
