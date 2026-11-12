@@ -91,18 +91,21 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 .col .card .nm{flex:1}
 .col .card .mark{font-size:15px;flex:none}
 
-.ghost{position:fixed;left:0;top:0;width:88px;height:88px;pointer-events:none;z-index:50;background:#fff;border:2px solid var(--ink);border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;transform:translate(-50%,-70%) rotate(-6deg)}
+.ghost{position:fixed;left:0;top:0;width:88px;height:88px;pointer-events:none;z-index:50;background:#fff;border:2px solid var(--ink);border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;will-change:transform}
 .ghost .ico{width:68px;height:68px}
 
 /* svg scene parts */
 .ico{stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
 .wire{fill:none;stroke:#1c1d2b;stroke-width:4;stroke-linecap:round}
-.flow{fill:none;stroke:#ffe14d;stroke-width:10;stroke-linecap:round;opacity:0;filter:url(#glowBig)}
+.flow{fill:none;stroke:#ffe14d;stroke-width:10;stroke-linecap:round;opacity:0}
+/* soft halo under the flow — a wide translucent stroke instead of a blur filter (blur re-renders every frame on iPad) */
+.halo{fill:none;stroke:#fff3a6;stroke-linecap:round;opacity:0}
+.halo path:first-child{stroke-width:30;stroke-opacity:.14}
+.halo path:last-child{stroke-width:18;stroke-opacity:.3}
 #ball{opacity:0;pointer-events:none}
 /* city: blacked-out silhouettes until the circuit is complete */
 .bld{fill:#24263f;transition:fill .5s}
 #city.lit .b0{fill:#7a6fb0} #city.lit .b1{fill:#5b5f97} #city.lit .b2{fill:#8a7cc4} #city.lit .b3{fill:#4f5288}
-#city.lit #windows{filter:url(#glowBig)}
 .lamp .head{fill:#4a4b63;transition:fill .3s}
 .lamp .cone,.lamp .pool{opacity:0;transition:opacity .4s}
 #city.lit .lamp .head{fill:#fff4b8}
@@ -127,11 +130,12 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 #slotBox{fill:rgba(255,255,255,.14);stroke:#fff;stroke-width:3;stroke-dasharray:8 6;transition:fill .15s}
 #slotBox.hot{fill:rgba(255,216,77,.45);stroke:var(--yellow)}
 #slotBox.filled{fill:#fff;stroke:#fff;stroke-dasharray:none}
-#slotBox.ok{stroke:var(--yellow);stroke-width:5;filter:url(#glow)}
+#slotBox.ok{stroke:var(--yellow);stroke-width:7}
 #slotBox.fail{stroke:var(--red);stroke-width:5}
 .slotHint{fill:#fff;font-size:15px;text-anchor:middle;pointer-events:none}
-.win{fill:#191a2c;transition:fill .25s}
-.win.on{fill:#ffcf4a}
+.win{fill:#191a2c;stroke:#fff0a8;stroke-width:4;stroke-opacity:0;transition:fill .25s,stroke-opacity .25s}
+#windows:not(.on) .win{transition-delay:0s!important}   /* lights go out at once */
+#windows.on .win{fill:#ffd95a;stroke-opacity:.55}   /* stroke = cheap glow */
 #cityGlow{opacity:0;transition:opacity .6s}
 #cityGlow.on{opacity:1}
 #failMark,#sparks{opacity:0}
@@ -251,12 +255,10 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
         <linearGradient id="coneG" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#fff4b8" stop-opacity=".9"/><stop offset="1" stop-color="#ffd96a" stop-opacity="0"/>
         </linearGradient>
-        <filter id="glowBig" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
+        <!-- glows are pre-drawn gradients, not blur filters: filters re-render every frame and made iPads stutter -->
+        <radialGradient id="glowG">
+          <stop offset="0" stop-color="#fffbe6"/><stop offset=".38" stop-color="#fffbe6"/><stop offset=".5" stop-color="#ffe14d" stop-opacity=".6"/><stop offset="1" stop-color="#ffe14d" stop-opacity="0"/>
+        </radialGradient>
       </defs>
       <rect width="1000" height="420" fill="url(#sky)"/>
       <g id="stars"></g>
@@ -265,7 +267,8 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 
       <rect x="300" y="292" width="400" height="128" fill="#3f93d6"/>
       <path class="wave" d="M330 320 q15 -8 30 0 t30 0 M450 345 q15 -8 30 0 t30 0 M580 315 q15 -8 30 0 t30 0 M380 385 q15 -8 30 0 t30 0 M560 395 q15 -8 30 0 t30 0"/>
-      <g id="reflect" stroke="#ffd36b" stroke-width="4" stroke-linecap="round" fill="none" filter="url(#glow)">
+      <g id="reflect" stroke="#ffd36b" stroke-width="4" stroke-linecap="round" fill="none">
+        <path d="M600 306 h52 M584 326 h72 M612 346 h42 M590 368 h62 M618 390 h34" stroke-width="11" stroke-opacity=".3"/>
         <path d="M600 306 h52 M584 326 h72 M612 346 h42 M590 368 h62 M618 390 h34"/>
       </g>
       <path d="M0 290 H335 Q350 330 338 420 H0Z" fill="#5fae5a" stroke="#2b2d42" stroke-width="3"/>
@@ -301,7 +304,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
         <g id="windows"></g>
         <g id="lamps"></g>
       </g>
-      <circle id="flash" cx="772" cy="196" r="16" fill="#fff6c8" filter="url(#glowBig)"/>
+      <circle id="flash" cx="772" cy="196" r="28" fill="url(#glowG)"/>
       <g id="banner">
         <rect x="797" y="74" width="160" height="40" rx="20" fill="#ffd84d" stroke="#2b2d42" stroke-width="3"/>
         <text x="877" y="101" class="lbl" style="font-size:19px">ไฟติดแล้ว! 💡</text>
@@ -318,9 +321,11 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 
       <path class="wire" d="M230 186 L300 110 Q380 140 448 165"/>
       <path class="wire" d="M552 165 Q620 140 700 110 L772 196"/>
+      <g id="haloA" class="halo"><path d="M230 186 L300 110 Q380 140 448 165"/><path d="M230 186 L300 110 Q380 140 448 165"/></g>
+      <g id="haloB" class="halo"><path d="M552 165 Q620 140 700 110 L772 196"/><path d="M552 165 Q620 140 700 110 L772 196"/></g>
       <path id="flowA" class="flow" d="M230 186 L300 110 Q380 140 448 165"/>
       <path id="flowB" class="flow" d="M552 165 Q620 140 700 110 L772 196"/>
-      <circle id="ball" r="9" fill="#fffbe6" filter="url(#glowBig)"/>
+      <circle id="ball" r="22" fill="url(#glowG)"/>
 
       <rect id="slotBox" x="458" y="123" width="84" height="84" rx="14"/>
       <g id="slotHint"><text class="slotHint" x="500" y="162">วางวัตถุ</text><text class="slotHint" x="500" y="182">ที่นี่</text></g>
@@ -419,7 +424,6 @@ const icon=(it)=>`<svg class="ico" viewBox="0 0 64 64" aria-hidden="true">${it.s
 const $=s=>document.querySelector(s);
 const svgNS='http://www.w3.org/2000/svg';
 (function stars(){const g=$('#stars');for(let i=0;i<40;i++){const c=document.createElementNS(svgNS,'circle');c.setAttribute('cx',Math.random()*1000);c.setAttribute('cy',Math.random()*170);c.setAttribute('r',Math.random()*1.6+.5);c.setAttribute('class','star');c.style.animationDelay=(Math.random()*2.5)+'s';g.appendChild(c);}})();
-const WINDOWS=[];
 (function windows(){
   const g=$('#windows');
   [[765,196,52,96],[822,142,60,150],[887,182,46,110],[938,122,54,170]].forEach(([x,y,w,h],b)=>{
@@ -429,7 +433,7 @@ const WINDOWS=[];
       e.setAttribute('x',ox+c*13);e.setAttribute('y',y+10+r*18);e.setAttribute('width',8);e.setAttribute('height',10);e.setAttribute('rx',1.5);
       e.setAttribute('class','win');g.appendChild(e);
       // light building by building, nearest to the incoming wire first
-      WINDOWS.push({el:e,delay:b*230+Math.random()*160});
+      e.style.transitionDelay=(b*230+Math.random()*160|0)+'ms';   // one class flip lights them all, staggered by CSS
     }
   });
   // street lamps in front of the buildings
@@ -447,14 +451,14 @@ function lightCity(celebrate=true){
   $('#city').classList.add('lit'); $('#cityShade').classList.add('off');
   $('#cityGlow').classList.add('on'); $('#reflect').classList.add('on');
   restart($('#flash'),'on');
-  WINDOWS.forEach(w=>{ w.t=setTimeout(()=>w.el.classList.add('on'),w.delay); });
+  $('#windows').classList.add('on');
   if(celebrate) setTimeout(()=>restart($('#banner'),'on'),350);
 }
 function darkCity(){
   $('#city').classList.remove('lit'); $('#cityShade').classList.remove('off');
   $('#cityGlow').classList.remove('on'); $('#reflect').classList.remove('on');
   ['#flash','#banner'].forEach(s=>$(s).classList.remove('on'));
-  WINDOWS.forEach(w=>{ clearTimeout(w.t); w.el.classList.remove('on'); });
+  $('#windows').classList.remove('on');
 }
 
 /* ---------- sound (iOS: unlocked on first tap) ---------- */
@@ -579,7 +583,7 @@ function idlePanel(){ panel(`<div class="msg">ลากวัตถุจาก�
 function openDrawer(open){ $('#drawer').classList.toggle('open',open); }
 
 function resetScene(){
-  ['#flowA','#flowB'].forEach(s=>{const p=$(s);p.classList.remove('live');p.style.strokeDasharray='';p.style.strokeDashoffset='';p.style.opacity=0;});
+  ['#flowA','#flowB','#haloA','#haloB'].forEach(s=>{const p=$(s);p.classList.remove('live');p.style.strokeDasharray='';p.style.strokeDashoffset='';p.style.opacity=0;});
   darkCity();
   $('#slotBox').classList.remove('ok','fail');
   $('#failMark').classList.remove('on'); $('#sparks').classList.remove('on');
@@ -614,18 +618,26 @@ function setGuess(g){
   panel(`<div class="msg">ทายว่า <b>${it.name}</b> ${g?'<span class="good">นำไฟฟ้า</span>':'<span class="bad">ไม่นำไฟฟ้า</span>'} — ลองเปิดสวิตช์ดูเลย!</div>
     <button class="btn go" id="switchBtn">🔌 เปิดสวิตช์</button>`);
 }
+const haloOf=p=>$('#halo'+p.id.slice(-1));
+// The wire shapes never change, so sample each path once; getPointAtLength every frame was the hot spot.
+const PATH_PTS=new Map();
+function pathPts(p){
+  if(!PATH_PTS.has(p)){ const L=p.getTotalLength(), pts=[]; for(let i=0;i<=120;i++){ const q=p.getPointAtLength(L*i/120); pts.push([q.x,q.y]); } PATH_PTS.set(p,{L,pts}); }
+  return PATH_PTS.get(p);
+}
 function animatePath(p,ms){
-  const L=p.getTotalLength();
-  p.style.strokeDasharray=`${L} ${L}`; p.style.strokeDashoffset=L; p.style.opacity=1;
+  const {L,pts}=pathPts(p), h=haloOf(p);
+  for(const e of [p,h]){ e.style.strokeDasharray=`${L} ${L}`; e.style.strokeDashoffset=L; }
+  p.style.opacity=1; h.style.opacity=1;   // dash styles on the <g> are inherited by both halo strokes
   const ball=$('#ball'); ball.style.opacity=1;
   return new Promise(res=>{const t0=performance.now();(function f(t){
-    const k=Math.min(1,Math.max(0,(t-t0)/ms)), pt=p.getPointAtLength(L*k);
-    p.style.strokeDashoffset=L*(1-k);
-    ball.setAttribute('cx',pt.x); ball.setAttribute('cy',pt.y);
+    const k=Math.min(1,Math.max(0,(t-t0)/ms)), [x,y]=pts[Math.round(k*120)];
+    p.style.strokeDashoffset=h.style.strokeDashoffset=L*(1-k);
+    ball.setAttribute('cx',x); ball.setAttribute('cy',y);
     if(k<1) requestAnimationFrame(f); else { ball.style.opacity=0; res(); }
   })(t0);});
 }
-function makeLive(p){p.style.strokeDasharray='';p.style.strokeDashoffset='';p.style.opacity=1;p.classList.add('live');}
+function makeLive(p){const h=haloOf(p);for(const e of [p,h]){e.style.strokeDasharray='';e.style.strokeDashoffset='';}p.style.opacity=1;h.style.opacity=1;p.classList.add('live');}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function runTest(){
@@ -701,7 +713,7 @@ function begin(state){
 
 /* ---------- title screen ---------- */
 // Bump on every deploy: teachers read it off the title screen to check an iPad has the latest version.
-const APP_VERSION=3;
+const APP_VERSION=4;
 const TUI=$('#titleUI');
 let predictMode=true, onTitle=false, leaveT=null, armT=null;
 try{ if(localStorage.getItem('powerRiver.predict')==='0') predictMode=false; }catch(e){}
@@ -758,7 +770,7 @@ function disarmNew(){
 
 /* ---------- input: drag & tap ---------- */
 let drag=null;
-function overSlot(x,y){const r=$('#slotBox').getBoundingClientRect(),p=40;return x>r.left-p&&x<r.right+p&&y>r.top-p&&y<r.bottom+p;}
+function overSlot(x,y){const r=drag&&drag.slot||$('#slotBox').getBoundingClientRect(),p=40;return x>r.left-p&&x<r.right+p&&y>r.top-p&&y<r.bottom+p;}
 document.addEventListener('pointerdown',e=>{
   const card=e.target.closest('.card'); if(!card||!S||S.running||drag) return;
   drag={id:card.dataset.id,card,x0:e.clientX,y0:e.clientY,ghost:null,pid:e.pointerId};
@@ -768,12 +780,13 @@ document.addEventListener('pointermove',e=>{
   if(!drag.ghost&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>8){
     const g=document.createElement('div');g.className='ghost';g.innerHTML=icon(byId[drag.id]);document.body.appendChild(g);
     drag.ghost=g;drag.card.classList.add('dragging');
+    drag.slot=$('#slotBox').getBoundingClientRect();   // measure once, not on every finger move
     try{drag.card.setPointerCapture(e.pointerId);}catch(_){}
     if(drag.card.closest('#drawer')) openDrawer(false);
   }
   if(drag.ghost){
     e.preventDefault();
-    drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px';
+    drag.ghost.style.transform=`translate3d(${e.clientX}px,${e.clientY}px,0) translate(-50%,-70%) rotate(-6deg)`;
     $('#slotBox').classList.toggle('hot',overSlot(e.clientX,e.clientY));
   }
 },{passive:false});
