@@ -102,7 +102,13 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 .halo{fill:none;stroke:#fff3a6;stroke-linecap:round;opacity:0}
 .halo path:first-child{stroke-width:30;stroke-opacity:.14}
 .halo path:last-child{stroke-width:18;stroke-opacity:.3}
-#ball{opacity:0;pointer-events:none}
+/* the energy ball is an HTML layer over the scene, moved with transform: moving an SVG circle repaints the whole scene every frame on iPad */
+#ball{position:fixed;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;z-index:4;opacity:0;will-change:transform;
+  background:radial-gradient(circle closest-side,#fffbe6 0,#fffbe6 38%,rgba(255,225,77,.6) 50%,rgba(255,225,77,0) 100%)}
+/* ambient loops pause while dragging/testing so the iPad only repaints what the player is watching */
+#scene.calm .wave,#scene.calm .steam,#scene.calm .star,#scene.calm #bulb,#scene.calm #reflect path{animation-play-state:paused}
+#fps{position:fixed;left:calc(6px + var(--sal));top:calc(6px + var(--sat));z-index:60;pointer-events:none;background:rgba(0,0,0,.72);color:#9f9;font:12px/1.35 ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:8px;white-space:pre;transform:translateZ(0)}
+#fps[hidden]{display:none}
 /* city: blacked-out silhouettes until the circuit is complete */
 .bld{fill:#24263f;transition:fill .5s}
 #city.lit .b0{fill:#7a6fb0} #city.lit .b1{fill:#5b5f97} #city.lit .b2{fill:#8a7cc4} #city.lit .b3{fill:#4f5288}
@@ -127,6 +133,7 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
 @keyframes zap{to{fill:#fff1a0}}
 .flow.live{stroke-dasharray:12 9;animation:flow .5s linear infinite}
 @keyframes flow{to{stroke-dashoffset:-21}}
+.flow.live.still{animation:none;stroke-dasharray:none}   /* after ~2s the flow settles into a steady glowing line */
 #slotBox{fill:rgba(255,255,255,.14);stroke:#fff;stroke-width:3;stroke-dasharray:8 6;transition:fill .15s}
 #slotBox.hot{fill:rgba(255,216,77,.45);stroke:var(--yellow)}
 #slotBox.filled{fill:#fff;stroke:#fff;stroke-dasharray:none}
@@ -325,7 +332,6 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
       <g id="haloB" class="halo"><path d="M552 165 Q620 140 700 110 L772 196"/><path d="M552 165 Q620 140 700 110 L772 196"/></g>
       <path id="flowA" class="flow" d="M230 186 L300 110 Q380 140 448 165"/>
       <path id="flowB" class="flow" d="M552 165 Q620 140 700 110 L772 196"/>
-      <circle id="ball" r="22" fill="url(#glowG)"/>
 
       <rect id="slotBox" x="458" y="123" width="84" height="84" rx="14"/>
       <g id="slotHint"><text class="slotHint" x="500" y="162">วางวัตถุ</text><text class="slotHint" x="500" y="182">ที่นี่</text></g>
@@ -373,6 +379,8 @@ button{font-family:inherit;color:inherit;touch-action:manipulation}
   <button class="pchip" id="predictChip" aria-pressed="true"><span class="dot"></span><span id="predictTxt">🔮 โหมดทาย: เปิด</span></button>
   <div class="tVer" id="tVer"></div>
 </div>
+<div id="ball" aria-hidden="true"></div>
+<div id="fps" hidden></div>
 
 <div class="overlay" id="endOv" hidden>
   <div class="modal">
@@ -583,7 +591,8 @@ function idlePanel(){ panel(`<div class="msg">ลากวัตถุจาก�
 function openDrawer(open){ $('#drawer').classList.toggle('open',open); }
 
 function resetScene(){
-  ['#flowA','#flowB','#haloA','#haloB'].forEach(s=>{const p=$(s);p.classList.remove('live');p.style.strokeDasharray='';p.style.strokeDashoffset='';p.style.opacity=0;});
+  clearTimeout(settleT);
+  ['#flowA','#flowB','#haloA','#haloB'].forEach(s=>{const p=$(s);p.classList.remove('live','still');p.style.strokeDasharray='';p.style.strokeDashoffset='';p.style.opacity=0;});
   darkCity();
   $('#slotBox').classList.remove('ok','fail');
   $('#failMark').classList.remove('on'); $('#sparks').classList.remove('on');
@@ -629,14 +638,21 @@ function animatePath(p,ms){
   const {L,pts}=pathPts(p), h=haloOf(p);
   for(const e of [p,h]){ e.style.strokeDasharray=`${L} ${L}`; e.style.strokeDashoffset=L; }
   p.style.opacity=1; h.style.opacity=1;   // dash styles on the <g> are inherited by both halo strokes
-  const ball=$('#ball'); ball.style.opacity=1;
+  // map viewBox → screen once per run (also picks up rotation/resizes between tests)
+  const m=$('#scene').getScreenCTM(), ball=$('#ball');
+  ball.style.width=ball.style.height=44*m.a+'px'; ball.style.margin=-22*m.a+'px 0 0 '+(-22*m.a)+'px';
+  const place=([x,y])=>{ ball.style.transform=`translate3d(${m.a*x+m.e}px,${m.d*y+m.f}px,0)`; };
+  place(pts[0]); ball.style.opacity=1;
   return new Promise(res=>{const t0=performance.now();(function f(t){
-    const k=Math.min(1,Math.max(0,(t-t0)/ms)), [x,y]=pts[Math.round(k*120)];
+    const k=Math.min(1,Math.max(0,(t-t0)/ms));
     p.style.strokeDashoffset=h.style.strokeDashoffset=L*(1-k);
-    ball.setAttribute('cx',x); ball.setAttribute('cy',y);
+    place(pts[Math.round(k*120)]);
     if(k<1) requestAnimationFrame(f); else { ball.style.opacity=0; res(); }
   })(t0);});
 }
+let settleT=null;
+function settleFlows(){ clearTimeout(settleT); settleT=setTimeout(()=>document.querySelectorAll('.flow.live').forEach(e=>e.classList.add('still')),2000); }
+const calm=on=>$('#scene').classList.toggle('calm',on);
 function makeLive(p){const h=haloOf(p);for(const e of [p,h]){e.style.strokeDasharray='';e.style.strokeDashoffset='';}p.style.opacity=1;h.style.opacity=1;p.classList.add('live');}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
@@ -645,7 +661,7 @@ async function runTest(){
   S.running=true;
   const it=byId[S.current];
   panel(`<div class="msg">⚡ ไฟฟ้ากำลังวิ่งไป...</div>`);
-  duck(true);
+  duck(true); calm(true);
   SFX.buzz(.9);
   await animatePath($('#flowA'),900);
   makeLive($('#flowA'));
@@ -676,7 +692,7 @@ async function runTest(){
     : `🔌 <b>${it.name}</b>ทำจาก${it.mat} ไฟฟ้าไหลผ่านไม่ได้ <span class="bad">วงจรจึงขาด</span>`;
   const done=S.testedOrder.length===ITEMS.length;
   panel(`<div class="msg">${explain}${feedback}</div>${done?'':'<span class="hint">ลากชิ้นต่อไปมาวางได้เลย</span>'}`);
-  S.running=false;
+  S.running=false; calm(false); settleFlows();
   setTimeout(()=>{ if(!S.running) duck(false); },600);
   render();
   if(done&&first&&!S.finished){ S.finished=true; clearSave(); setTimeout(finish,1300); }
@@ -685,7 +701,7 @@ async function runTest(){
 
 function finish(){
   resetScene(); makeLive($('#flowA')); makeLive($('#flowB'));
-  showSlot('key'); $('#slotBox').classList.add('ok');
+  showSlot('key'); $('#slotBox').classList.add('ok'); settleFlows();
   lightCity(false);
   const right=Object.values(S.tested).filter(r=>r.correct).length;
   $('#endScore').innerHTML=S.predict?`<div>ทายถูก</div><div class="score">${right} / 20</div>`:'';
@@ -713,11 +729,41 @@ function begin(state){
 
 /* ---------- title screen ---------- */
 // Bump on every deploy: teachers read it off the title screen to check an iPad has the latest version.
-const APP_VERSION=4;
+const APP_VERSION=5;
 const TUI=$('#titleUI');
 let predictMode=true, onTitle=false, leaveT=null, armT=null;
 try{ if(localStorage.getItem('powerRiver.predict')==='0') predictMode=false; }catch(e){}
 $('#tVer').textContent=`เวอร์ชัน ${APP_VERSION}`;
+/* ---------- hidden FPS meter: long-press the version label for 2s ---------- */
+(function fpsMeter(){
+  const el=$('#fps'), ver=$('#tVer'); let on=false, raf=0, hold=null;
+  const st={last:0,n:0,t0:0,cur:0,phase:'',min:{drag:null,test:null}};
+  function tick(t){
+    if(st.last){ st.n++; }
+    st.last=t;
+    if(t-st.t0>=250){
+      st.cur=Math.round(st.n*1000/(t-st.t0)); st.n=0; st.t0=t;
+      const ph=drag&&drag.ghost?'drag':(S&&S.running?'test':'');
+      if(ph&&ph!==st.phase) st.min[ph]=st.cur;          // new drag/test: start a fresh minimum
+      if(ph) st.min[ph]=Math.min(st.min[ph],st.cur);
+      st.phase=ph;
+      const f=v=>v==null?'–':v;
+      el.textContent=`FPS ${st.cur}
+ลาก ต่ำสุด ${f(st.min.drag)}
+ทดสอบ ต่ำสุด ${f(st.min.test)}`;
+    }
+    raf=requestAnimationFrame(tick);
+  }
+  function set(v){
+    on=v; el.hidden=!v; cancelAnimationFrame(raf);
+    if(v){ st.last=0; st.n=0; st.t0=performance.now(); raf=requestAnimationFrame(tick); }
+    try{ localStorage.setItem('powerRiver.fps',v?'1':'0'); }catch(e){}
+  }
+  const cancel=()=>{ clearTimeout(hold); hold=null; };
+  ver.addEventListener('pointerdown',()=>{ cancel(); hold=setTimeout(()=>{ set(!on); SFX.click(); },2000); });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>ver.addEventListener(ev,cancel));
+  try{ if(localStorage.getItem('powerRiver.fps')==='1') set(true); }catch(e){}
+})();
 function syncPredict(){
   $('#predictChip').setAttribute('aria-pressed',String(predictMode));
   $('#predictTxt').textContent=`🔮 โหมดทาย: ${predictMode?'เปิด':'ปิด'}`;
@@ -779,7 +825,7 @@ document.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.pid) return;
   if(!drag.ghost&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>8){
     const g=document.createElement('div');g.className='ghost';g.innerHTML=icon(byId[drag.id]);document.body.appendChild(g);
-    drag.ghost=g;drag.card.classList.add('dragging');
+    drag.ghost=g;drag.card.classList.add('dragging'); calm(true);
     drag.slot=$('#slotBox').getBoundingClientRect();   // measure once, not on every finger move
     try{drag.card.setPointerCapture(e.pointerId);}catch(_){}
     if(drag.card.closest('#drawer')) openDrawer(false);
@@ -787,7 +833,7 @@ document.addEventListener('pointermove',e=>{
   if(drag.ghost){
     e.preventDefault();
     drag.ghost.style.transform=`translate3d(${e.clientX}px,${e.clientY}px,0) translate(-50%,-70%) rotate(-6deg)`;
-    $('#slotBox').classList.toggle('hot',overSlot(e.clientX,e.clientY));
+    const hot=overSlot(e.clientX,e.clientY); if(hot!==drag.hot){ drag.hot=hot; $('#slotBox').classList.toggle('hot',hot); }   // touch the SVG only when it changes
   }
 },{passive:false});
 function endDrag(e,cancel){
@@ -795,7 +841,7 @@ function endDrag(e,cancel){
   const d=drag; drag=null;
   $('#slotBox').classList.remove('hot');
   d.card.classList.remove('dragging');
-  if(d.ghost){ d.ghost.remove(); if(!cancel&&overSlot(e.clientX,e.clientY)) placeItem(d.id); }
+  if(d.ghost){ if(!S.running) calm(false); d.ghost.remove(); if(!cancel&&overSlot(e.clientX,e.clientY)) placeItem(d.id); }
   else if(!cancel) placeItem(d.id);
 }
 document.addEventListener('pointerup',e=>endDrag(e,false));
